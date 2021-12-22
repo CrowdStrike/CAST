@@ -33,7 +33,7 @@ try {
     
     $castPath = Join-Path $TempDirectoryPath "cast.exe"
     $OutputPath = Join-Path $TempDirectoryPath "cast_results.json"
-    $ExpectedHash = "11E76A098EB68FD0DFF2829B53F4EE9515AD31EEF153FEA16B7C9BEFA2861B30"
+    $ExpectedHash = "86FE23EAF103F69DA6D81ED95CF2418185DC879B00D8D22156B1496E4DD0FEFA"
     $Filter = '\.(jar|war)$'
 
     if ((Test-Path -Path $castPath) -eq $false) {
