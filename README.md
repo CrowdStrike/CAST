@@ -1,7 +1,7 @@
 # CAST: CrowdStrike Archive Scan Tool
 
 This tool is a quick scanner to walk filesystems looking for vulnerable versions of log4j.  Please
-see our blog post [here](https://www.crowdstrike.com/blog/) for more detailed discussion.
+see our blog post [here](https://www.crowdstrike.com/blog/free-targeted-log4j-search-tool/) for more detailed discussion.
 
 Currently, it scans a given set of directories for JAR, WAR, ZIP, or EAR files, then scans for files therein matching a known set of checksums.
 
