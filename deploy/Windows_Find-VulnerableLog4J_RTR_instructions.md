@@ -10,7 +10,7 @@
 
 ## Instructions
 
-1. Upload [CAST](./cast.exe) to Response Scripts & Files (https://falcon.crowdstrike.com/configuration/real-time-response/tools/files) as a "Put" file
+1. Upload the CAST executable from the Releases page to Response Scripts & Files (https://falcon.crowdstrike.com/configuration/real-time-response/tools/files) as a "Put" file
 
 2. Upload [Find-VulnerableLog4J.ps1](./Find-VulnerableLog4J.ps1) as a Response Script (https://falcon.crowdstrike.com/configuration/real-time-response/tools/scripts)
 
