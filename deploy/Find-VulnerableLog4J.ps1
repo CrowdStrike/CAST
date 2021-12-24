@@ -42,8 +42,8 @@ try {
     }
     # Verify hash of cast.exe
     $LocalSha256 = ([System.BitConverter]::ToString(
-            (New-Object System.Security.Cryptography.SHA256CryptoServiceProvider).ComputeHash(
-                [System.IO.File]::ReadAllBytes($castPath)))).Replace("-", "")
+        (New-Object System.Security.Cryptography.SHA256CryptoServiceProvider).ComputeHash(
+        [System.IO.File]::ReadAllBytes($castPath)))).Replace("-", "")
     if (-not($LocalSha256)) {
         throw "Failed to calculate SHA256 hash."
     }
@@ -65,35 +65,34 @@ try {
     [array] $Directories = ($Directories | ForEach-Object {$_.Replace("\\?\","")}) | Sort-Object -Unique
     Write-Output "`nSearching $(($Directories | Measure-Object).Count) directories for files matching '$Filter'..."
 
-    try {
-        [array] $Files = @($Directories).foreach{
+    [array] $Files = try {
+         @($Directories).foreach{
             # Collect matching file paths inside directories
             (Get-ChildItem -LiteralPath $_ -Force -ErrorAction SilentlyContinue -Recurse |
                 Where-Object { $_.Name -match $Filter }).FullName
         }
     }
     catch {
-        [array] $Files = @($Directories | ForEach-Object {
+        $Directories | ForEach-Object {
             # Collect matching file paths inside directories
             (Get-ChildItem -LiteralPath $_ -Force -ErrorAction SilentlyContinue -Recurse | 
-                Where-Object { $_.Name -match $Filter }).FullName })
+                Where-Object { $_.Name -match $Filter }).FullName }
     }
-
     [array] $Files = $Files | Sort-Object -Unique
     Write-Output "`nIdentified $(($Files | Measure-Object).Count) files to scan."
-    try {
-        $FilesToScan = $Files.foreach{ "'$_'" } -join ' '
+    [array] $ScanGroups = for ($i = 0; $i -lt ($Files | Measure-Object).Count; $i += 20) {
+        ($Files[$i..($i + 19)] | ForEach-Object {
+            "'$_'"
+        }) -join ' '
     }
-    catch {
-        $FilesToScan = ($Files | ForEach-Object { "'$_'" }) -Join ' '
-    }
-     
-    Invoke-Expression "& '$castPath' scan $FilesToScan" | ForEach-Object {
-        if ($null -ne $_) {
-            $_ | Out-File -Append -FilePath $OutputPath -Encoding ASCII
-        }
-        if ($_ -match $JavaClassFilter) {
-            Write-Output $_
+    $ScanGroups | ForEach-Object {
+        Invoke-Expression "& '$castPath' scan $_" | ForEach-Object {
+            if (-not [string]::IsNullOrEmpty($_)) {
+                $_ | Out-File -Append -FilePath $OutputPath -Encoding ASCII
+            }
+            if ($_ -match $JavaClassFilter) {
+                Write-Output $_
+            }
         }
     }
 }
