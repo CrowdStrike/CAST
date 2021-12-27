@@ -30,11 +30,9 @@ $TempDirectoryPath = ""
 $JavaClassFilter = "(JmsAppender|JndiManager|NetUtils)"
 
 try {
-    
     $castPath = Join-Path $TempDirectoryPath "cast.exe"
     $OutputPath = Join-Path $TempDirectoryPath "cast_results.json"
     $ExpectedHash = "86FE23EAF103F69DA6D81ED95CF2418185DC879B00D8D22156B1496E4DD0FEFA"
-    $Filter = '\.(jar|war)$'
 
     if ((Test-Path -Path $castPath) -eq $false) {
         # Check that cast.exe is present in same directory as script
@@ -46,8 +44,7 @@ try {
         [System.IO.File]::ReadAllBytes($castPath)))).Replace("-", "")
     if (-not($LocalSha256)) {
         throw "Failed to calculate SHA256 hash."
-    }
-    elseif ($LocalSha256 -ne $ExpectedHash) {
+    } elseif ($LocalSha256 -ne $ExpectedHash) {
         throw "Checksum mismatch."
     }
     [array] $Directories = try {
@@ -55,51 +52,30 @@ try {
         (Get-CimInstance -ClassName Win32_Product -Filter "InstallLocation like '%'").InstallLocation
         (Get-CimInstance -ClassName Win32_Process -ErrorAction Stop -Filter "ExecutablePath like '%'" |
             Where-Object { $_.ProcessId -ne 0 -and $_.ProcessId -ne 4 }).ExecutablePath | Split-Path
-    }
-    catch {
+    } catch {
         (Get-WmiObject -Class Win32_Product -Filter "InstallLocation like '%'").InstallLocation
         (Get-WmiObject -Class Win32_Process -ErrorAction Stop -Filter "ExecutablePath like '%'"  |
             Where-Object { $_.ProcessId -ne 0 -and $_.ProcessId -ne 4 }).ExecutablePath | Split-Path
     }
     # Combine our list of directories into a unique list for searching
-    [array] $Directories = ($Directories | ForEach-Object {$_.Replace("\\?\","")}) | Sort-Object -Unique
-    Write-Output "`nSearching $(($Directories | Measure-Object).Count) directories for files matching '$Filter'..."
-
-    [array] $Files = try {
-         @($Directories).foreach{
-            # Collect matching file paths inside directories
-            (Get-ChildItem -LiteralPath $_ -Force -ErrorAction SilentlyContinue -Recurse |
-                Where-Object { $_.Name -match $Filter }).FullName
-        }
-    }
-    catch {
-        $Directories | ForEach-Object {
-            # Collect matching file paths inside directories
-            (Get-ChildItem -LiteralPath $_ -Force -ErrorAction SilentlyContinue -Recurse | 
-                Where-Object { $_.Name -match $Filter }).FullName }
-    }
-    [array] $Files = $Files | Sort-Object -Unique
-    Write-Output "`nIdentified $(($Files | Measure-Object).Count) files to scan."
-    [array] $ScanGroups = for ($i = 0; $i -lt ($Files | Measure-Object).Count; $i += 20) {
-        ($Files[$i..($i + 19)] | ForEach-Object {
-            "'$_'"
-        }) -join ' '
-    }
-    $ScanGroups | Where-Object { -not [string]::IsNullOrEmpty($_) } | ForEach-Object {
-        Invoke-Expression "& '$castPath' scan $_" | ForEach-Object {
-            $_ | Out-File -Append -FilePath $OutputPath -Encoding ASCII
-            if ($_ -match $JavaClassFilter) {
-                Write-Output $_
+    [array] $Directories = ($Directories | ForEach-Object { $_.Replace("\\?\","") }) | Sort-Object -Unique
+    Write-Output "`nSearching $(($Directories | Measure-Object).Count) directories..."
+    for ($i = 0; $i -lt ($Directories | Measure-Object).Count; $i += 20) {
+        [string] $Group = ($Directories[$i..($i + 19)] | Where-Object { -not [string]::IsNullOrEmpty($_) } |
+            ForEach-Object { ,"'$($_.TrimEnd('\'))'" }) -join ' '
+        if ($Group) {
+            Invoke-Expression "& '$castPath' scan $Group" | ForEach-Object {
+                $_ | Out-File -Append -FilePath $OutputPath -Encoding ASCII
+                if ($_ -match $JavaClassFilter) {
+                    Write-Output $_
+                }
             }
         }
     }
-}
-catch {
+} catch {
     Write-Error "$($_.Exception.Message)"
     exit -1
-}
-
-finally {
+} finally {
     if (Test-Path $OutputPath) {
         Write-Output "`nIdentified potentially vulnerable JAR file(s)!"
         Write-Output "`nResults of scan available in $OutputPath"
@@ -108,8 +84,7 @@ finally {
         try {
             Remove-Item $castPath
             Write-Output "`nSuccessfully removed $castPath"
-        }
-        catch {
+        } catch {
             Write-Output "`nPotentially unable to remove $castPath"
         }
     }
