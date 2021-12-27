@@ -85,11 +85,9 @@ try {
             "'$_'"
         }) -join ' '
     }
-    $ScanGroups | ForEach-Object {
+    $ScanGroups | Where-Object { -not [string]::IsNullOrEmpty($_) } | ForEach-Object {
         Invoke-Expression "& '$castPath' scan $_" | ForEach-Object {
-            if (-not [string]::IsNullOrEmpty($_)) {
-                $_ | Out-File -Append -FilePath $OutputPath -Encoding ASCII
-            }
+            $_ | Out-File -Append -FilePath $OutputPath -Encoding ASCII
             if ($_ -match $JavaClassFilter) {
                 Write-Output $_
             }
