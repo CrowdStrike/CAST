@@ -49,11 +49,11 @@ try {
     }
     [array] $Directories = try {
         # Check installed app and running process directories
-        (Get-CimInstance -ClassName Win32_Product -Filter "InstallLocation like '%'").InstallLocation
+        (Get-CimInstance -ClassName Win32reg_AddRemovePrograms -Filter "InstallLocation like '%'").InstallLocation
         (Get-CimInstance -ClassName Win32_Process -ErrorAction Stop -Filter "ExecutablePath like '%'" |
             Where-Object { $_.ProcessId -ne 0 -and $_.ProcessId -ne 4 }).ExecutablePath | Split-Path
     } catch {
-        (Get-WmiObject -Class Win32_Product -Filter "InstallLocation like '%'").InstallLocation
+        (Get-WmiObject -Class Win32reg_AddRemovePrograms -Filter "InstallLocation like '%'").InstallLocation
         (Get-WmiObject -Class Win32_Process -ErrorAction Stop -Filter "ExecutablePath like '%'"  |
             Where-Object { $_.ProcessId -ne 0 -and $_.ProcessId -ne 4 }).ExecutablePath | Split-Path
     }
