@@ -47,18 +47,16 @@ try {
     } elseif ($LocalSha256 -ne $ExpectedHash) {
         throw "Checksum mismatch."
     }
-    [array] $Directories = try {
-        # Check installed app and running process directories
-        (Get-CimInstance -ClassName Win32reg_AddRemovePrograms -Filter "InstallLocation like '%'").InstallLocation
-        (Get-CimInstance -ClassName Win32_Process -ErrorAction Stop -Filter "ExecutablePath like '%'" |
-            Where-Object { $_.ProcessId -ne 0 -and $_.ProcessId -ne 4 }).ExecutablePath | Split-Path
-    } catch {
-        (Get-WmiObject -Class Win32reg_AddRemovePrograms -Filter "InstallLocation like '%'").InstallLocation
-        (Get-WmiObject -Class Win32_Process -ErrorAction Stop -Filter "ExecutablePath like '%'"  |
-            Where-Object { $_.ProcessId -ne 0 -and $_.ProcessId -ne 4 }).ExecutablePath | Split-Path
+    # Check installed app and running process directories
+    [array] $Directories = ('Software\Microsoft\Windows\CurrentVersion\Uninstall\*',
+    'Software\Wow6432Node\Microsoft\Windows\CurrentVersion\Uninstall\*').foreach{
+        (Get-ItemProperty -Path "Registry::\HKEY_LOCAL_MACHINE\$_" | Where-Object InstallLocation).InstallLocation
+        foreach ($UserSid in (Get-WmiObject Win32_UserProfile | Where-Object { $_.SID -like 'S-1-5-21-*' }).SID) {
+            (Get-ItemProperty -Path "Registry::\HKEY_USERS\$UserSid\$_" | Where-Object InstallLocation).InstallLocation
+        }
     }
-    # Combine our list of directories into a unique list for searching
-    [array] $Directories = ($Directories | ForEach-Object { $_.Replace("\\?\","") }) | Sort-Object -Unique
+    $Directories += (Get-Process | Where-Object { $_.Path }).Path | Split-Path
+    $Directories = $Directories | Sort-Object -Unique
     Write-Output "`nSearching $(($Directories | Measure-Object).Count) directories..."
     for ($i = 0; $i -lt ($Directories | Measure-Object).Count; $i += 20) {
         [string] $Group = ($Directories[$i..($i + 19)] | Where-Object { -not [string]::IsNullOrEmpty($_) } |
