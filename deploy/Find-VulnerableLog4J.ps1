@@ -32,7 +32,7 @@ $JavaClassFilter = "(JmsAppender|JndiManager|NetUtils)"
 try {
     $castPath = Join-Path $TempDirectoryPath "cast.exe"
     $OutputPath = Join-Path $TempDirectoryPath "cast_results.json"
-    $ExpectedHash = "86FE23EAF103F69DA6D81ED95CF2418185DC879B00D8D22156B1496E4DD0FEFA"
+    $ExpectedHash = "3185231d6fba2b25ec863becbea38ae1b2c4f613aca6b2589080903762c7f4a2"
 
     if ((Test-Path -Path $castPath) -eq $false) {
         # Check that cast.exe is present in same directory as script
