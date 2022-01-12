@@ -9,6 +9,10 @@ Currently, it scans a given set of directories for JAR, WAR, ZIP, or EAR files, 
 
 See [the releases page](https://github.com/CrowdStrike/CAST/releases) for a list of downloads
 
+## Support
+
+As an open source project this software is not officially supported by CrowdStrike. As such we ask that you please refrain from sending inquiries to the CrowdStrike support team. The project maintainers will be working with active community contributors to address bugs and supply new features. If you have identified a bug please [submit an issue through GitHub](https://github.com/CrowdStrike/CAST/issues/new).
+
 ## Deployment
 
 Please see the [deploy](./deploy) directory for scripts and guidance.
