@@ -57,9 +57,21 @@ try {
     }
     $Directories += (Get-Process | Where-Object { $_.Path }).Path | Split-Path
     $Directories = $Directories | Sort-Object -Unique
-    Write-Output "`nSearching $(($Directories | Measure-Object).Count) directories..."
-    for ($i = 0; $i -lt ($Directories | Measure-Object).Count; $i += 20) {
-        [string] $Group = ($Directories[$i..($i + 19)] | Where-Object { -not [string]::IsNullOrEmpty($_) } |
+
+    $ValidDirectories = New-Object System.Collections.Generic.List[string]
+
+    foreach($path in $Directories){
+        if (Test-Path $path){
+            $ValidDirectories.Add($path)
+        }else{
+            Write-Warning "Invalid Path: $Path"
+        }
+
+    }
+    
+    Write-Output "`nSearching $(($ValidDirectories | Measure-Object).Count) directories..."
+    for ($i = 0; $i -lt ($ValidDirectories | Measure-Object).Count; $i += 20) {
+        [string] $Group = ($ValidDirectories[$i..($i + 19)] | Where-Object { -not [string]::IsNullOrEmpty($_) } |
             ForEach-Object { ,"'$($_.TrimEnd('\'))'" }) -join ' '
         if ($Group) {
             Invoke-Expression "& '$castPath' scan $Group" | ForEach-Object {
