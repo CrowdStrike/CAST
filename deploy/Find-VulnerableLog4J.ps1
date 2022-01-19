@@ -56,7 +56,8 @@ try {
         }
     }
     $Directories += (Get-Process | Where-Object { $_.Path }).Path | Split-Path
-    $Directories = $Directories | Sort-Object -Unique
+    $Directories = $Directories | Sort-Object -Unique | Where-Object { Test-Path $_ -EA SilentlyContinue }
+    
     Write-Output "`nSearching $(($Directories | Measure-Object).Count) directories..."
     for ($i = 0; $i -lt ($Directories | Measure-Object).Count; $i += 20) {
         [string] $Group = ($Directories[$i..($i + 19)] | Where-Object { -not [string]::IsNullOrEmpty($_) } |
